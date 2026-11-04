@@ -1,0 +1,34 @@
+# ==============================================================================
+# .gitignore — Lab 02: SBOM Engineering & Dependency Governance
+# ==============================================================================
+
+# Arquivos Sensíveis Internos e Materiais de Instrutor / Professor
+*teacher*
+*professor*
+*instrutor*
+*gabarito*
+*.guide.md
+
+# Dependências e Ambientes Virtuais Locais
+node_modules/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Artefatos Gerados Durante as Fases Práticas
+dist/*.json
+dist/*.spdx
+dist/*.cdx
+dist/*.tar.gz
+attacks_simulation/exfiltrated_data.log
+
+# Caches de Ferramentas de Scanner
+.trivy/
+.osv-scanner/
+
+# Arquivos Temporários de Sistema Operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+

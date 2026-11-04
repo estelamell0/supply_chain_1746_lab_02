@@ -1,0 +1,11 @@
+{
+  "name": "corporate-auth-telemetry",
+  "version": "99.9.9",
+  "description": "Pacote simulador de injeção de scripts no ciclo de vida (Supply Chain Security)",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "node ./inject.js"
+  },
+  "license": "UNLICENSED"
+}
+

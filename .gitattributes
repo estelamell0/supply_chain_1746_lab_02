@@ -1,0 +1,12 @@
+# Garantir determinismo e fim de linha LF em todos os scripts e manifests
+* text=auto eol=lf
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.py text eol=lf
+*.json text eol=lf
+*.js text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+Dockerfile* text eol=lf
+

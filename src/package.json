@@ -1,0 +1,18 @@
+{
+  "name": "payment-api-service",
+  "version": "1.0.0",
+  "description": "Microsserviço de pagamentos para auditoria de dependências e SBOM",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Executando testes...\" && exit 0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "lodash": "4.17.20",
+    "gpl-math-lib": "1.0.0",
+    "@corp/payment-vault": "1.0.0"
+  },
+  "license": "Proprietary"
+}
+
