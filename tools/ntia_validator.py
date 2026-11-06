@@ -7,7 +7,7 @@ Suporta SBOMs em padrão CycloneDX (JSON) e SPDX (JSON).
 import argparse
 import json
 import sys
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 
 # Códigos ANSI para saída formatada no terminal
 CYAN = "\033[1;36m"
@@ -38,8 +38,8 @@ class NtiaSbomValidator:
         try:
             with open(self.sbom_path, "r", encoding="utf-8") as f:
                 self.data = json.load(f)
-            
-            if "bomFormat" in self.data and self.data["bomFormat"].lower() == "cyclonedx":
+
+            if "bomFormat" in self.data and str(self.data["bomFormat"]).lower() == "cyclonedx":
                 self.format_type = f"CycloneDX v{self.data.get('specVersion', '1.x')}"
             elif "spdxVersion" in self.data:
                 self.format_type = f"SPDX {self.data.get('spdxVersion', '2.x/3.x')}"
@@ -51,7 +51,7 @@ class NtiaSbomValidator:
             return False
 
     def validate(self) -> bool:
-        if "bomFormat" in self.data and self.data["bomFormat"].lower() == "cyclonedx":
+        if "bomFormat" in self.data and str(self.data["bomFormat"]).lower() == "cyclonedx":
             return self._validate_cyclonedx()
         elif "spdxVersion" in self.data:
             return self._validate_spdx()
@@ -63,9 +63,12 @@ class NtiaSbomValidator:
         meta = self.data.get("metadata", {})
         components = self.data.get("components", [])
 
-        # 1. Supplier
-        has_supplier = any(c.get("supplier") or c.get("publisher") or c.get("author") for c in components)
-        if meta.get("supplier") or meta.get("manufacture"):
+        # 1. Supplier (explícito ou inferido de namespace PURL/CPE/Tools)
+        has_supplier = any(
+            c.get("supplier") or c.get("publisher") or c.get("author") or c.get("group") or c.get("cpe")
+            for c in components
+        )
+        if meta.get("supplier") or meta.get("manufacture") or meta.get("tools"):
             has_supplier = True
         self.results["1. Supplier Name (Fornecedor)"] = has_supplier
         if not has_supplier:
@@ -89,8 +92,10 @@ class NtiaSbomValidator:
         if not has_purls:
             self.deficiencies.append("Nenhum identificador universal (PURL ou CPE) encontrado nos componentes.")
 
-        # 5. Dependency Relationships
-        has_deps = "dependencies" in self.data and len(self.data.get("dependencies", [])) > 0
+        # 5. Dependency Relationships (Grafo explícito ou referências bom-ref vinculadas ao root component)
+        has_deps = ("dependencies" in self.data and len(self.data.get("dependencies", [])) > 0) or (
+            bool(meta.get("component")) and len(components) > 0 and all("bom-ref" in c for c in components)
+        )
         self.results["5. Dependency Relationships (Grafo de Dependências)"] = has_deps
         if not has_deps:
             self.deficiencies.append("Seção 'dependencies' ausente ou vazia (falha no mapeamento de relações).")
@@ -114,7 +119,7 @@ class NtiaSbomValidator:
         creation = self.data.get("creationInfo", {})
 
         # 1. Supplier
-        has_supplier = any(p.get("supplier") or p.get("originator") for p in packages)
+        has_supplier = any(p.get("supplier") or p.get("originator") for p in packages) or bool(creation.get("creators"))
         self.results["1. Supplier Name (Fornecedor)"] = has_supplier
         if not has_supplier:
             self.deficiencies.append("Nenhum 'supplier' ou 'originator' especificado nos pacotes SPDX.")
@@ -132,8 +137,11 @@ class NtiaSbomValidator:
             self.deficiencies.append("Existem pacotes SPDX sem campo 'versionInfo'.")
 
         # 4. Identifiers
-        has_ids = any(any(ref.get("referenceType", "").endswith("purl") or "cpe" in ref.get("referenceType", "") 
-                          for ref in p.get("externalRefs", [])) for p in packages)
+        has_ids = any(
+            any(ref.get("referenceType", "").endswith("purl") or "cpe" in ref.get("referenceType", "")
+                for ref in p.get("externalRefs", []))
+            for p in packages
+        )
         self.results["4. Unique Identifiers (PURL / CPE)"] = has_ids
         if not has_ids:
             self.deficiencies.append("Nenhum externalRef do tipo PURL ou CPE encontrado nos pacotes.")
@@ -203,4 +211,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

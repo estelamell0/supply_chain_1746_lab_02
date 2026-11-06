@@ -16,6 +16,7 @@ $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 # 0. Limpeza de artefatos temporários
 $DistDir = Join-Path $ScriptDir "dist"
+$NodeModulesDir = Join-Path $ScriptDir "src/node_modules"
 $ExfiltratedLog = Join-Path $ScriptDir "attacks_simulation/exfiltrated_data.log"
 
 if (Test-Path -LiteralPath $ExfiltratedLog) {
@@ -25,6 +26,9 @@ if (Test-Path -LiteralPath $ExfiltratedLog) {
 if ($Clean) {
     if (Test-Path -LiteralPath $DistDir) {
         Remove-Item -LiteralPath $DistDir -Recurse -Force
+    }
+    if (Test-Path -LiteralPath $NodeModulesDir) {
+        Remove-Item -LiteralPath $NodeModulesDir -Recurse -Force
     }
     Write-Host "[OK] Artefatos do Laboratorio 02 limpos com sucesso!" -ForegroundColor Green
     exit 0
@@ -37,10 +41,29 @@ Write-Host "==================================================================" 
 # 1. Garantir pasta dist/
 if (-not (Test-Path -LiteralPath $DistDir)) {
     New-Item -ItemType Directory -Path $DistDir | Out-Null
-    Write-Host "[*] Diretorio dist/ criado para armazenar relatorios e SBOMs." -ForegroundColor Green
 }
+Write-Host "[*] Diretorio dist/ preparado para armazenar relatorios e SBOMs." -ForegroundColor Green
 
-# 2. Diagnóstico de Ferramental (Docker vs Host)
+# 2. Preparar árvore de metadados offline em src/node_modules (para Trivy License & Syft SBOM)
+$Stubs = @(
+    @{ Path = "express"; Name = "express"; Version = "4.18.2"; License = "MIT"; Author = "TJ Holowaychuk" },
+    @{ Path = "lodash"; Name = "lodash"; Version = "4.17.20"; License = "MIT"; Author = "John-David Dalton" },
+    @{ Path = "gpl-math-lib"; Name = "gpl-math-lib"; Version = "1.0.0"; License = "GPL-3.0"; Author = "Free Software Math Group" },
+    @{ Path = "@corp/payment-vault"; Name = "@corp/payment-vault"; Version = "1.0.0"; License = "Proprietary"; Author = "Corp FinTech Security" }
+)
+
+foreach ($s in $Stubs) {
+    $pkgDir = Join-Path $NodeModulesDir $s.Path
+    if (-not (Test-Path -LiteralPath $pkgDir)) {
+        New-Item -ItemType Directory -Path $pkgDir -Force | Out-Null
+    }
+    $pkgJsonPath = Join-Path $pkgDir "package.json"
+    $pkgJsonContent = "{`n  `"name`": `"$($s.Name)`",`n  `"version`": `"$($s.Version)`",`n  `"license`": `"$($s.License)`",`n  `"author`": `"$($s.Author)`"`n}`n"
+    [System.IO.File]::WriteAllText($pkgJsonPath, $pkgJsonContent, $Utf8NoBom)
+}
+Write-Host "[*] Arvore de metadados de pacotes sincronizada em src/node_modules/." -ForegroundColor Green
+
+# 3. Diagnóstico de Ferramental (Docker vs Host)
 Write-Host "`n[*] Verificando ecossistema de execucao..." -ForegroundColor Yellow
 
 $DockerFound = $false
@@ -57,7 +80,7 @@ try {
 if ($DockerFound) {
     Write-Host "`n>>> MODO RECOMENDADO DISPONIVEL (CONTAINER):" -ForegroundColor Cyan
     Write-Host "    Para entrar no ambiente hermetico com todas as ferramentas instaladas, execute:" -ForegroundColor White
-    Write-Host "    docker compose run --rm lab`n" -ForegroundColor Yellow
+    Write-Host "    docker compose run --rm --build lab`n" -ForegroundColor Yellow
 } else {
     Write-Host " [INFO] Docker nao detectado ou inativo. Execucao em modo Host direto." -ForegroundColor Cyan
     Write-Host "        Consulte SETUP_AMBIENTE.md para instrucoes detalhadas de instalacao." -ForegroundColor Cyan
@@ -66,4 +89,3 @@ if ($DockerFound) {
 Write-Host "------------------------------------------------------------------"
 Write-Host "[OK] Ambiente do Laboratorio 02 pronto para execucao!" -ForegroundColor Green
 Write-Host "Consulte README.md para iniciar o roteiro pratico."
-

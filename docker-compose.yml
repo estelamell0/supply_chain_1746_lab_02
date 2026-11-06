@@ -6,10 +6,20 @@ services:
     image: supply-chain-lab02:latest
     container_name: supply_chain_lab02
     working_dir: /workspace
+    environment:
+      - USER=ci-runner-bot
+      - GITHUB_TOKEN=ghp_SimulatedPipelineToken9876543210abcdef
+      - AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - NPM_TOKEN=npm_SimulatedInternalRegistryToken12345
+      - SYFT_CHECK_FOR_APP_UPDATE=false
+      - TRIVY_SKIP_VERSION_CHECK=true
+      - TRIVY_DISABLE_TELEMETRY=true
     volumes:
       - .:/workspace
-      - /var/run/docker.sock:/var/run/docker.sock # Opcional: permite escaneamento de imagens do host se montado
+      - /var/run/docker.sock:/var/run/docker.sock
+    dns_opt:
+      - single-request
+      - single-request-reopen
     stdin_open: true
     tty: true
     network_mode: bridge
-

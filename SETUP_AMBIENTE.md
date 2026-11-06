@@ -35,7 +35,7 @@ O repositório já inclui um `Dockerfile` e um `docker-compose.yml` que provisio
 
 3. Inicie o container de trabalho interativo:
    ```bash
-   docker compose run --rm lab
+   docker compose run --rm --build lab
    ```
 
 4. Pronto! O terminal agora está dentro do container `/workspace`. O volume está montado na sua pasta local, portanto todos os SBOMs e relatórios gerados serão salvos na sua máquina física em tempo real.

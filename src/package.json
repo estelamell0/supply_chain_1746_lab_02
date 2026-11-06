@@ -2,6 +2,7 @@
   "name": "payment-api-service",
   "version": "1.0.0",
   "description": "Microsserviço de pagamentos para auditoria de dependências e SBOM",
+  "author": "Ada FinTech Engineering <sec@corp.internal>",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -15,4 +16,3 @@
   },
   "license": "Proprietary"
 }
-
